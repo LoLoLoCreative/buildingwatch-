@@ -123,6 +123,10 @@ export default function Home() {
             </p>
           </div>
 
+          <p className="text-sm font-normal text-center mb-5" style={{ color: "var(--text-muted)" }}>
+            See what&apos;s changing in any building.
+          </p>
+
           {/* Search */}
           <form onSubmit={handleSubmit}>
             <div
