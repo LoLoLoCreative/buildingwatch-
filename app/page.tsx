@@ -116,7 +116,7 @@ export default function Home() {
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="mb-2">
-              <span className="text-2xl font-semibold tracking-tight">BuildingPulse</span>
+              <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-10 mx-auto" />
             </div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               NYC housing transparency — HPD data &amp; community reports
@@ -340,13 +340,16 @@ function ResultsSection({
         <IssueForm address={result.address} />
       </div>
 
-      <p className="text-xs text-center pb-4" style={{ color: "var(--text-muted)" }}>
-        Data from{" "}
-        <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
-          NYC Open Data
-        </a>{" "}
-        · Updated daily
-      </p>
+      <div className="text-center pb-4 space-y-3">
+        <img src="/wordmark.svg" alt="BuildingPulse" className="h-5 mx-auto opacity-40" />
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          Data from{" "}
+          <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
+            NYC Open Data
+          </a>{" "}
+          · Updated daily
+        </p>
+      </div>
     </div>
   );
 }
