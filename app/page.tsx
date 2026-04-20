@@ -115,8 +115,7 @@ export default function Home() {
         <div className="w-full max-w-xl">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <img src="/favicon.png" alt="" className="w-8 h-8 rounded-lg" />
+            <div className="mb-2">
               <span className="text-2xl font-semibold tracking-tight">BuildingPulse</span>
             </div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
