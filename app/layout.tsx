@@ -5,8 +5,9 @@ import "./globals.css";
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
-  title: "BuildingWatch — NYC Housing Data",
+  title: "BuildingPulse — NYC Housing Data",
   description: "Look up HPD violations and complaints for any NYC address",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

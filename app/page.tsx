@@ -7,35 +7,36 @@ import { buildCategoryCounts, CategoryName, CATEGORY_NAMES } from "@/lib/categor
 
 const BOROUGHS = ["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"];
 
-const EXAMPLES = [
+const FEATURED = [
   { address: "280 Riverside Dr", borough: "Manhattan" },
   { address: "1691 Fulton Ave", borough: "Bronx" },
   { address: "555 Eastern Pkwy", borough: "Brooklyn" },
+  { address: "1955 Walton Ave", borough: "Bronx" },
 ];
 
-type StatusFilter = "all" | "open";
-type ActiveTab = "chart" | "violations" | "complaints";
+type ResultData = {
+  violations: Record<string, string>[];
+  complaints: Record<string, string>[];
+  address: string;
+};
 
 export default function Home() {
-  const [houseNumber, setHouseNumber] = useState("");
-  const [streetName, setStreetName] = useState("");
+  const [query, setQuery] = useState("");
   const [borough, setBorough] = useState("Manhattan");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{
-    violations: Record<string, string>[];
-    complaints: Record<string, string>[];
-    address: string;
-  } | null>(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [activeTab, setActiveTab] = useState<ActiveTab>("chart");
+  const [result, setResult] = useState<ResultData | null>(null);
+
+  function parseAddress(raw: string) {
+    const match = raw.trim().match(/^(\d+[A-Za-z]?)\s+(.+)$/);
+    if (!match) return null;
+    return { hn: match[1], sn: match[2] };
+  }
 
   async function search(hn: string, sn: string, boro: string) {
     setLoading(true);
     setError(null);
     setResult(null);
-    setStatusFilter("all");
-    setActiveTab("chart");
     try {
       const params = new URLSearchParams({
         housenumber: hn,
@@ -59,297 +60,236 @@ export default function Home() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const hn = houseNumber.trim();
-    const sn = streetName.trim();
-    if (!hn || !sn) return;
-    search(hn, sn, borough);
+    const parsed = parseAddress(query);
+    if (!parsed) {
+      setError('Enter a full address, e.g. "280 Riverside Dr"');
+      return;
+    }
+    setError(null);
+    search(parsed.hn, parsed.sn, borough);
   }
 
-  function handleExample(addr: string, boro: string) {
-    const match = addr.trim().match(/^(\d+[A-Za-z]?)\s+(.+)$/);
-    if (!match) return;
-    const [, hn, sn] = match;
-    setHouseNumber(hn);
-    setStreetName(sn);
+  function handleFeatured(addr: string, boro: string) {
+    const parsed = parseAddress(addr);
+    if (!parsed) return;
+    setQuery(addr);
     setBorough(boro);
-    search(hn, sn, boro);
+    search(parsed.hn, parsed.sn, boro);
   }
 
-  const filteredViolations = result
-    ? statusFilter === "open"
-      ? result.violations.filter((v) => v.currentstatus?.toLowerCase().includes("open"))
-      : result.violations
-    : [];
+  const allIssues: { type: "violation" | "complaint"; label: string; sub: string; date: string; status: string; cls?: string }[] = [];
+  if (result) {
+    for (const v of result.violations) {
+      allIssues.push({
+        type: "violation",
+        label: v.novdescription ?? "—",
+        sub: `Class ${v["class"] ?? "—"}`,
+        date: v.inspectiondate?.slice(0, 10) ?? "",
+        status: v.currentstatus ?? "",
+        cls: v["class"],
+      });
+    }
+    for (const c of result.complaints) {
+      allIssues.push({
+        type: "complaint",
+        label: c.descriptor ? `${c.descriptor}${c.descriptor_2 ? ` — ${c.descriptor_2}` : ""}` : "—",
+        sub: c.complaint_type ?? "",
+        date: c.created_date?.slice(0, 10) ?? "",
+        status: c.status ?? "",
+      });
+    }
+    allIssues.sort((a, b) => (b.date > a.date ? 1 : -1));
+  }
 
-  const filteredComplaints = result
-    ? statusFilter === "open"
-      ? result.complaints.filter((c) => c.status?.toLowerCase() === "open" || c.status?.toLowerCase() === "in progress")
-      : result.complaints
-    : [];
-
+  const total = result ? result.violations.length + result.complaints.length : 0;
   const counts = result
-    ? buildCategoryCounts(filteredViolations, filteredComplaints)
+    ? buildCategoryCounts(result.violations, result.complaints)
     : (Object.fromEntries(CATEGORY_NAMES.map((c) => [c, 0])) as Record<CategoryName, number>);
 
-  const total = filteredViolations.length + filteredComplaints.length;
+  const showHome = !result && !loading;
 
   return (
-    <main className="min-h-screen px-4 py-12 max-w-2xl mx-auto">
-      {/* Header */}
-      <header className="mb-10">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xl">🏢</span>
-          <h1 className="text-lg font-semibold tracking-tight">BuildingWatch</h1>
-        </div>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          NYC housing data — HPD violations &amp; complaints
-        </p>
-      </header>
-
-      {/* Search form */}
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div
-          className="flex flex-col sm:flex-row gap-2 p-2 rounded-2xl"
-          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-        >
-          <input
-            type="text"
-            value={houseNumber}
-            onChange={(e) => setHouseNumber(e.target.value)}
-            placeholder="House #"
-            className="text-sm px-3 py-2.5 rounded-xl outline-none w-24 shrink-0"
-            style={{ backgroundColor: "var(--bg)", color: "var(--text)" }}
-          />
-          <input
-            type="text"
-            value={streetName}
-            onChange={(e) => setStreetName(e.target.value)}
-            placeholder="Street name"
-            className="flex-1 text-sm px-3 py-2.5 rounded-xl outline-none"
-            style={{ backgroundColor: "var(--bg)", color: "var(--text)" }}
-          />
-          <select
-            value={borough}
-            onChange={(e) => setBorough(e.target.value)}
-            className="text-sm px-3 py-2.5 rounded-xl outline-none shrink-0"
-            style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "none" }}
-          >
-            {BOROUGHS.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            disabled={loading || !houseNumber.trim() || !streetName.trim()}
-            className="text-sm font-medium px-5 py-2.5 rounded-xl transition-all disabled:opacity-40 shrink-0"
-            style={{ backgroundColor: "var(--text)", color: "var(--bg)" }}
-          >
-            {loading ? "Searching…" : "Search"}
-          </button>
-        </div>
-      </form>
-
-      {/* Example links */}
-      {!result && !loading && (
-        <div className="mb-10 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>Try:</span>
-          {EXAMPLES.map(({ address, borough: b }) => (
-            <button
-              key={address}
-              onClick={() => handleExample(address, b)}
-              className="text-xs underline underline-offset-2 transition-opacity hover:opacity-60"
-              style={{ color: "var(--text-muted)" }}
-            >
-              {address}, {b}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="mb-6 text-sm px-4 py-3 rounded-xl" style={{ backgroundColor: "#FEF2F2", color: "#991B1B" }}>
-          {error}
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div className="animate-pulse space-y-3 mb-8">
-          <div className="h-48 rounded-2xl" style={{ backgroundColor: "var(--surface)" }} />
-        </div>
-      )}
-
-      {/* Results */}
-      {result && !loading && (
-        <div className="space-y-5">
-          {/* Address + status filter */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <p className="font-medium">{result.address}</p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                {result.violations.length} violations · {result.complaints.length} complaints
-              </p>
+    <main className={`min-h-screen px-4 ${showHome ? "flex flex-col items-center justify-center pb-24" : "py-10 max-w-2xl mx-auto"}`}>
+      {/* ── HOME VIEW ── */}
+      {showHome && (
+        <div className="w-full max-w-xl">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img src="/favicon.png" alt="" className="w-8 h-8 rounded-lg" />
+              <span className="text-2xl font-semibold tracking-tight">BuildingPulse</span>
             </div>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              NYC housing transparency — HPD data &amp; community reports
+            </p>
+          </div>
+
+          {/* Search */}
+          <form onSubmit={handleSubmit}>
             <div
-              className="flex text-xs rounded-xl overflow-hidden"
-              style={{ border: "1px solid var(--border)" }}
+              className="flex gap-2 p-2 rounded-2xl mb-2"
+              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              {(["all", "open"] as StatusFilter[]).map((f) => (
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Enter address, e.g. 280 Riverside Dr"
+                className="flex-1 text-sm px-3 py-2.5 rounded-xl outline-none"
+                style={{ backgroundColor: "var(--bg)", color: "var(--text)" }}
+                autoFocus
+              />
+              <select
+                value={borough}
+                onChange={(e) => setBorough(e.target.value)}
+                className="text-sm px-3 py-2.5 rounded-xl outline-none shrink-0"
+                style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "none" }}
+              >
+                {BOROUGHS.map((b) => <option key={b}>{b}</option>)}
+              </select>
+              <button
+                type="submit"
+                disabled={!query.trim()}
+                className="text-sm font-medium px-5 py-2.5 rounded-xl transition-all disabled:opacity-40 shrink-0"
+                style={{ backgroundColor: "var(--text)", color: "var(--bg)" }}
+              >
+                Search
+              </button>
+            </div>
+            {error && (
+              <p className="text-xs px-1 mt-1" style={{ color: "#991B1B" }}>{error}</p>
+            )}
+          </form>
+
+          {/* Most reported buildings */}
+          <div className="mt-12">
+            <p className="text-xs font-medium mb-3" style={{ color: "var(--text-muted)" }}>
+              MOST REPORTED BUILDINGS
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {FEATURED.map(({ address, borough: b }) => (
                 <button
-                  key={f}
-                  onClick={() => setStatusFilter(f)}
-                  className="px-3 py-1.5 transition-colors"
-                  style={{
-                    backgroundColor: statusFilter === f ? "var(--text)" : "var(--surface)",
-                    color: statusFilter === f ? "var(--bg)" : "var(--text-muted)",
-                  }}
+                  key={address}
+                  onClick={() => handleFeatured(address, b)}
+                  className="text-left px-4 py-3 rounded-xl transition-all hover:opacity-70"
+                  style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
                 >
-                  {f === "all" ? "All" : "Open only"}
+                  <p className="text-sm font-medium truncate">{address}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{b}</p>
                 </button>
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Tabs */}
-          <div
-            className="flex gap-1 p-1 rounded-xl w-fit"
-            style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-          >
-            {([
-              ["chart", "Overview"],
-              ["violations", `Violations (${filteredViolations.length})`],
-              ["complaints", `Complaints (${filteredComplaints.length})`],
-            ] as [ActiveTab, string][]).map(([tab, label]) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="text-xs px-3 py-1.5 rounded-lg transition-all"
-                style={{
-                  backgroundColor: activeTab === tab ? "var(--text)" : "transparent",
-                  color: activeTab === tab ? "var(--bg)" : "var(--text-muted)",
-                }}
-              >
-                {label}
-              </button>
-            ))}
+      {/* ── LOADING ── */}
+      {loading && (
+        <div className="w-full max-w-2xl mx-auto animate-pulse space-y-3 pt-10">
+          <div className="h-6 w-48 rounded-lg" style={{ backgroundColor: "var(--surface)" }} />
+          <div className="h-48 rounded-2xl" style={{ backgroundColor: "var(--surface)" }} />
+          <div className="h-32 rounded-2xl" style={{ backgroundColor: "var(--surface)" }} />
+        </div>
+      )}
+
+      {/* ── RESULTS VIEW ── */}
+      {result && !loading && (
+        <div className="space-y-6">
+          {/* Back + header */}
+          <div>
+            <button
+              onClick={() => { setResult(null); setError(null); }}
+              className="text-xs mb-4 flex items-center gap-1 transition-opacity hover:opacity-60"
+              style={{ color: "var(--text-muted)" }}
+            >
+              ← Back
+            </button>
+            <h1 className="text-lg font-semibold">{result.address}</h1>
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+              {total} issues on record · HPD data + community reports
+            </p>
           </div>
 
           {/* Chart */}
-          {activeTab === "chart" && (
+          {total > 0 && (
             <div
               className="rounded-2xl p-6"
               style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              {total === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-                  No issues found for this address.
-                </p>
-              ) : (
-                <ResultsChart counts={counts} total={total} />
-              )}
+              <ResultsChart counts={counts} total={total} />
             </div>
           )}
 
-          {/* Violations list */}
-          {activeTab === "violations" && (
+          {total === 0 && (
+            <div
+              className="rounded-2xl p-8 text-center"
+              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>No issues on record for this address.</p>
+            </div>
+          )}
+
+          {/* Flat issue list */}
+          {allIssues.length > 0 && (
             <div
               className="rounded-2xl overflow-hidden"
               style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
             >
-              {filteredViolations.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>No violations found.</p>
-              ) : (
-                filteredViolations.slice(0, 50).map((v, i) => (
-                  <div
-                    key={i}
-                    className="px-5 py-4"
-                    style={{ borderBottom: i < Math.min(filteredViolations.length, 50) - 1 ? "1px solid var(--border)" : "none" }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm leading-snug flex-1">{v.novdescription ?? "—"}</p>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full shrink-0 font-medium"
-                        style={{
-                          backgroundColor: v["class"] === "C" ? "#FEF2F2" : v["class"] === "B" ? "#FFFBEB" : "var(--bg)",
-                          color: v["class"] === "C" ? "#991B1B" : v["class"] === "B" ? "#92400E" : "var(--text-muted)",
-                        }}
-                      >
-                        Class {v["class"]}
-                      </span>
+              {allIssues.slice(0, 60).map((item, i) => (
+                <div
+                  key={i}
+                  className="px-5 py-3.5"
+                  style={{ borderBottom: i < Math.min(allIssues.length, 60) - 1 ? "1px solid var(--border)" : "none" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      {item.sub && (
+                        <p className="text-xs mb-0.5 truncate" style={{ color: "var(--text-muted)" }}>{item.sub}</p>
+                      )}
+                      <p className="text-sm leading-snug">{item.label}</p>
                     </div>
-                    <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-                      {v.inspectiondate?.slice(0, 10)} · {v.currentstatus}
-                    </p>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor:
+                          item.status?.toLowerCase().includes("open") ? "#F0FDF4"
+                          : item.cls === "C" ? "#FEF2F2"
+                          : item.cls === "B" ? "#FFFBEB"
+                          : "var(--bg)",
+                        color:
+                          item.status?.toLowerCase().includes("open") ? "#166534"
+                          : item.cls === "C" ? "#991B1B"
+                          : item.cls === "B" ? "#92400E"
+                          : "var(--text-muted)",
+                      }}
+                    >
+                      {item.status || "—"}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Complaints list */}
-          {activeTab === "complaints" && (
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              {filteredComplaints.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>No complaints found.</p>
-              ) : (
-                filteredComplaints.slice(0, 50).map((c, i) => (
-                  <div
-                    key={i}
-                    className="px-5 py-4"
-                    style={{ borderBottom: i < Math.min(filteredComplaints.length, 50) - 1 ? "1px solid var(--border)" : "none" }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>{c.complaint_type}</p>
-                        <p className="text-sm leading-snug">{c.descriptor}{c.descriptor_2 ? ` — ${c.descriptor_2}` : ""}</p>
-                      </div>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full shrink-0"
-                        style={{
-                          backgroundColor: c.status?.toLowerCase() === "open" ? "#F0FDF4" : "var(--bg)",
-                          color: c.status?.toLowerCase() === "open" ? "#166534" : "var(--text-muted)",
-                        }}
-                      >
-                        {c.status ?? "—"}
-                      </span>
-                    </div>
-                    <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-                      {c.created_date?.slice(0, 10)}
-                    </p>
-                  </div>
-                ))
-              )}
+                  {item.date && (
+                    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{item.date}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           {/* Report form */}
-          <div className="pt-2">
+          <div>
             <h2 className="text-sm font-medium mb-3">Report an issue</h2>
             <IssueForm address={result.address} />
           </div>
+
+          {/* Footer */}
+          <p className="text-xs text-center pb-4" style={{ color: "var(--text-muted)" }}>
+            Data from{" "}
+            <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
+              NYC Open Data
+            </a>{" "}
+            · Updated daily
+          </p>
         </div>
       )}
-
-      {/* Pre-search: show form */}
-      {!result && !loading && !error && (
-        <div>
-          <h2 className="text-sm font-medium mb-3">Report an issue</h2>
-          <IssueForm />
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="mt-16 pb-8 text-xs text-center" style={{ color: "var(--text-muted)" }}>
-        Data from{" "}
-        <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
-          NYC Open Data
-        </a>{" "}
-        · HPD violations &amp; complaints · Updated daily
-      </footer>
     </main>
   );
 }
