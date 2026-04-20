@@ -114,9 +114,9 @@ export default function Home() {
       {showHome && (
         <div className="w-full max-w-xl">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="mb-2">
-              <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-10 mx-auto" />
+          <div className="text-center mb-6">
+            <div className="mb-6">
+              <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-20 mx-auto" />
             </div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               NYC housing transparency — HPD data &amp; community reports
