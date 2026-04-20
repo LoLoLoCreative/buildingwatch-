@@ -114,7 +114,7 @@ export default function IssueForm({ address }: Props) {
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           placeholder={selectedCategory ? "Describe the issue briefly" : "Select a category first"}
           disabled={!selectedCategory}
-          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none transition-all disabled:opacity-40"
+          className="w-full text-sm px-4 py-3 rounded-xl outline-none transition-all disabled:opacity-40"
           style={{
             backgroundColor: "var(--bg)",
             border: "1px solid var(--border)",
@@ -171,7 +171,7 @@ export default function IssueForm({ address }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full text-sm px-4 py-2.5 rounded-xl outline-none"
+          className="w-full text-sm px-4 py-3 rounded-xl outline-none"
           style={{
             backgroundColor: "var(--bg)",
             border: "1px solid var(--border)",
@@ -183,7 +183,7 @@ export default function IssueForm({ address }: Props) {
       <button
         type="submit"
         disabled={!selectedCategory || !title}
-        className="w-full py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-30"
+        className="w-full py-4 rounded-xl text-sm font-medium transition-all disabled:opacity-30"
         style={{ backgroundColor: "var(--text)", color: "var(--bg)" }}
       >
         Submit report

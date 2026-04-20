@@ -36,17 +36,17 @@ export default function ResultsChart({ counts, total }: Props) {
 
       <div className="space-y-2.5">
         {data.map(({ name, count }) => (
-          <div key={name} className="flex items-center gap-3">
+          <div key={name} className="flex items-center gap-2 sm:gap-3">
             <span className="w-4 text-sm shrink-0">{CATEGORY_ICONS[name as CategoryName]}</span>
             <span
-              className="text-xs w-44 shrink-0 truncate"
+              className="text-xs w-24 sm:w-44 shrink-0 truncate"
               style={{ color: "var(--text-muted)" }}
               title={name}
             >
               {name}
             </span>
             <div
-              className="flex-1 h-4 rounded-full overflow-hidden"
+              className="flex-1 h-3 sm:h-4 rounded-full overflow-hidden"
               style={{ backgroundColor: "var(--border)" }}
             >
               <div
@@ -59,7 +59,7 @@ export default function ResultsChart({ counts, total }: Props) {
               />
             </div>
             <span
-              className="text-xs w-6 text-right tabular-nums shrink-0"
+              className="text-xs w-5 sm:w-6 text-right tabular-nums shrink-0"
               style={{ color: count > 0 ? "var(--text)" : "var(--text-muted)" }}
             >
               {count}

@@ -127,7 +127,7 @@ export default function Home() {
           {/* Search */}
           <form onSubmit={handleSubmit}>
             <div
-              className="flex gap-2 p-2 rounded-2xl mb-2"
+              className="flex flex-col sm:flex-row gap-2 p-2 rounded-2xl mb-2"
               style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <input
@@ -135,26 +135,28 @@ export default function Home() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Enter address, e.g. 280 Riverside Dr"
-                className="flex-1 text-sm px-3 py-2.5 rounded-xl outline-none"
+                className="w-full sm:flex-1 text-sm px-3 py-3 sm:py-2.5 rounded-xl outline-none"
                 style={{ backgroundColor: "var(--bg)", color: "var(--text)" }}
                 autoFocus
               />
-              <select
-                value={borough}
-                onChange={(e) => setBorough(e.target.value)}
-                className="text-sm px-3 py-2.5 rounded-xl outline-none shrink-0"
-                style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "none" }}
-              >
-                {BOROUGHS.map((b) => <option key={b}>{b}</option>)}
-              </select>
-              <button
-                type="submit"
-                disabled={!query.trim()}
-                className="text-sm font-medium px-5 py-2.5 rounded-xl transition-all disabled:opacity-40 shrink-0"
-                style={{ backgroundColor: "var(--text)", color: "var(--bg)" }}
-              >
-                Search
-              </button>
+              <div className="flex gap-2">
+                <select
+                  value={borough}
+                  onChange={(e) => setBorough(e.target.value)}
+                  className="flex-1 sm:flex-none text-sm px-3 py-3 sm:py-2.5 rounded-xl outline-none"
+                  style={{ backgroundColor: "var(--bg)", color: "var(--text)", border: "none" }}
+                >
+                  {BOROUGHS.map((b) => <option key={b}>{b}</option>)}
+                </select>
+                <button
+                  type="submit"
+                  disabled={!query.trim()}
+                  className="shrink-0 text-sm font-medium px-5 py-3 sm:py-2.5 rounded-xl transition-all disabled:opacity-40"
+                  style={{ backgroundColor: "var(--text)", color: "var(--bg)" }}
+                >
+                  Search
+                </button>
+              </div>
             </div>
             {error && (
               <p className="text-xs px-1 mt-1" style={{ color: "#991B1B" }}>{error}</p>
@@ -328,8 +330,14 @@ function ResultsSection({
       )}
 
       {/* 3) Report form */}
-      <div>
-        <h2 className="text-sm font-medium mb-3">Report an issue</h2>
+      <div
+        className="pt-8"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <h2 className="text-xl font-semibold mb-1">Report an issue</h2>
+        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
+          Something wrong with this building? Let neighbors know.
+        </p>
         <IssueForm address={result.address} />
       </div>
 
