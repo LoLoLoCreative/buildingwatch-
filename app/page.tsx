@@ -340,8 +340,15 @@ function ResultsSection({
         <IssueForm address={result.address} />
       </div>
 
-      <div className="text-center py-6">
-        <img src="/wordmark.svg" alt="BuildingPulse" className="h-4 mx-auto" />
+      <div className="text-center py-8 space-y-1.5">
+        <p className="text-sm font-medium">BuildingPulse</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          Data from{" "}
+          <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
+            NYC Open Data
+          </a>{" "}
+          · Updated daily
+        </p>
       </div>
     </div>
   );
