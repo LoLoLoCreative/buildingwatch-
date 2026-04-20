@@ -114,9 +114,16 @@ export default function Home() {
       {showHome && (
         <div className="w-full max-w-xl">
           {/* Logo */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-20 mx-auto" />
           </div>
+
+          <p
+            className="text-center mb-4"
+            style={{ fontSize: "clamp(1rem, 2.5vw, 1.375rem)", fontWeight: 500, color: "var(--text)" }}
+          >
+            See what&apos;s changing in any building.
+          </p>
 
           {/* Search */}
           <form onSubmit={handleSubmit}>
