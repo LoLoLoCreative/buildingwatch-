@@ -7,6 +7,10 @@ const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
 export const metadata: Metadata = {
   title: "BuildingPulse — NYC Housing Data",
   description: "Look up HPD violations and complaints for any NYC address",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "257x257" }],
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
