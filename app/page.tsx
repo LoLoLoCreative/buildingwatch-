@@ -194,57 +194,108 @@ export default function Home() {
 
       {/* ── RESULTS VIEW ── */}
       {result && !loading && (
-        <div className="space-y-6">
-          {/* Back + header */}
-          <div>
-            <button
-              onClick={() => { setResult(null); setError(null); }}
-              className="text-xs mb-4 flex items-center gap-1 transition-opacity hover:opacity-60"
-              style={{ color: "var(--text-muted)" }}
-            >
-              ← Back
-            </button>
-            <h1 className="text-lg font-semibold">{result.address}</h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              {total} issues on record · HPD data + community reports
-            </p>
-          </div>
+        <ResultsSection
+          result={result}
+          total={total}
+          counts={counts}
+          allIssues={allIssues}
+          onBack={() => { setResult(null); setError(null); }}
+        />
+      )}
+    </main>
+  );
+}
 
-          {/* Chart */}
-          {total > 0 && (
-            <div
-              className="rounded-2xl p-6"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <ResultsChart counts={counts} total={total} />
-            </div>
-          )}
+/* ── Results Section ── */
+type IssueItem = {
+  type: "violation" | "complaint";
+  label: string;
+  sub: string;
+  date: string;
+  status: string;
+  cls?: string;
+};
 
-          {total === 0 && (
-            <div
-              className="rounded-2xl p-8 text-center"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>No issues on record for this address.</p>
-            </div>
-          )}
+function ResultsSection({
+  result,
+  total,
+  counts,
+  allIssues,
+  onBack,
+}: {
+  result: ResultData;
+  total: number;
+  counts: Record<CategoryName, number>;
+  allIssues: IssueItem[];
+  onBack: () => void;
+}) {
+  const [open, setOpen] = useState(false);
 
-          {/* Flat issue list */}
-          {allIssues.length > 0 && (
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+  return (
+    <div className="space-y-6">
+      {/* Back + header */}
+      <div>
+        <button
+          onClick={onBack}
+          className="text-xs mb-4 flex items-center gap-1 transition-opacity hover:opacity-60"
+          style={{ color: "var(--text-muted)" }}
+        >
+          ← Back
+        </button>
+        <h1 className="text-lg font-semibold">{result.address}</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+          {total} issues on record · HPD data + community reports
+        </p>
+      </div>
+
+      {/* 1) Bar chart */}
+      {total > 0 ? (
+        <div
+          className="rounded-2xl p-6"
+          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <ResultsChart counts={counts} total={total} />
+        </div>
+      ) : (
+        <div
+          className="rounded-2xl p-8 text-center"
+          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>No issues on record for this address.</p>
+        </div>
+      )}
+
+      {/* 2) View all violations dropdown */}
+      {allIssues.length > 0 && (
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium transition-opacity hover:opacity-70"
+          >
+            <span>View all issues ({allIssues.length})</span>
+            <span
+              className="text-base transition-transform duration-200"
+              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block" }}
             >
-              {allIssues.slice(0, 60).map((item, i) => (
+              ↓
+            </span>
+          </button>
+
+          {open && (
+            <div style={{ borderTop: "1px solid var(--border)" }}>
+              {allIssues.slice(0, 100).map((item, i) => (
                 <div
                   key={i}
                   className="px-5 py-3.5"
-                  style={{ borderBottom: i < Math.min(allIssues.length, 60) - 1 ? "1px solid var(--border)" : "none" }}
+                  style={{ borderBottom: i < Math.min(allIssues.length, 100) - 1 ? "1px solid var(--border)" : "none" }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       {item.sub && (
-                        <p className="text-xs mb-0.5 truncate" style={{ color: "var(--text-muted)" }}>{item.sub}</p>
+                        <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>{item.sub}</p>
                       )}
                       <p className="text-sm leading-snug">{item.label}</p>
                     </div>
@@ -273,23 +324,22 @@ export default function Home() {
               ))}
             </div>
           )}
-
-          {/* Report form */}
-          <div>
-            <h2 className="text-sm font-medium mb-3">Report an issue</h2>
-            <IssueForm address={result.address} />
-          </div>
-
-          {/* Footer */}
-          <p className="text-xs text-center pb-4" style={{ color: "var(--text-muted)" }}>
-            Data from{" "}
-            <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
-              NYC Open Data
-            </a>{" "}
-            · Updated daily
-          </p>
         </div>
       )}
-    </main>
+
+      {/* 3) Report form */}
+      <div>
+        <h2 className="text-sm font-medium mb-3">Report an issue</h2>
+        <IssueForm address={result.address} />
+      </div>
+
+      <p className="text-xs text-center pb-4" style={{ color: "var(--text-muted)" }}>
+        Data from{" "}
+        <a href="https://data.cityofnewyork.us" target="_blank" rel="noopener noreferrer" className="underline">
+          NYC Open Data
+        </a>{" "}
+        · Updated daily
+      </p>
+    </div>
   );
 }
