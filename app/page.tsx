@@ -116,8 +116,7 @@ export default function Home() {
           {/* Logo */}
           <div className="text-center mb-6">
             <div className="mb-6">
-              <div className="text-5xl font-semibold tracking-tight leading-none" style={{ color: "var(--text)" }}>BP</div>
-              <div className="text-base font-normal mt-3" style={{ color: "var(--text)" }}>BuildingPulse</div>
+              <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-20 mx-auto" />
             </div>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               NYC housing transparency — HPD data &amp; community reports
