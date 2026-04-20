@@ -115,17 +115,8 @@ export default function Home() {
         <div className="w-full max-w-xl">
           {/* Logo */}
           <div className="text-center mb-6">
-            <div className="mb-6">
-              <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-20 mx-auto" />
-            </div>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              NYC housing transparency — HPD data &amp; community reports
-            </p>
+            <img src="/Primary_logo.svg" alt="BuildingPulse" className="h-20 mx-auto" />
           </div>
-
-          <p className="text-sm font-normal text-center mb-5" style={{ color: "var(--text-muted)" }}>
-            See what&apos;s changing in any building.
-          </p>
 
           {/* Search */}
           <form onSubmit={handleSubmit}>
@@ -166,8 +157,16 @@ export default function Home() {
             )}
           </form>
 
+          {/* Subtitle */}
+          <p
+            className="text-center mt-4 mb-7"
+            style={{ fontSize: "0.9375rem", fontWeight: 400, color: "var(--text-muted)" }}
+          >
+            NYC housing transparency — HPD data &amp; community reports
+          </p>
+
           {/* Most reported buildings */}
-          <div className="mt-12">
+          <div className="mt-0">
             <p className="text-xs font-medium mb-3" style={{ color: "var(--text-muted)" }}>
               MOST REPORTED BUILDINGS
             </p>
